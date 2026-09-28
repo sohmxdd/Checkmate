@@ -21,6 +21,13 @@ The switch operates on a simple principle:
 - TRIGGERED: Timer expired; target file encryption executes.
 - DISARMED: Switch is halted safely by the user.
 
+## Configuration Options
+
+| Parameter   | Type | Default | Description |
+| ----------- | ---- | ------- | ----------- |
+| target_file | Path | (req)   | File path to protect upon switch trigger |
+| interval    | int  | 30      | Maximum seconds between check-ins |
+
 ## Installation
 
 ### Prerequisites
