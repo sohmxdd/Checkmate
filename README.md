@@ -1,11 +1,7 @@
 # CHECKMATE
 
-A local-first, software-based dead man's switch.
+A local-first, software-based dead man switch.
 
-## Concept
+## Overview
 
-CHECKMATE monitors regular user check-ins. If a check-in interval expires without user interaction, the switch triggers automated protective actions (such as encrypting critical files).
-
-## Getting Started
-
-*(In development)*
+CHECKMATE provides an automated, local safety mechanism for safeguarding sensitive data. If regular check-ins are not maintained within a specified interval, the switch triggers defensive measures such as encrypting designated files.
