@@ -12,3 +12,11 @@ The switch operates on a simple principle:
 1. Arm the switch with a target file and a timeout interval.
 2. Regularly reset the countdown by checking in.
 3. If a check-in is missed, the switch triggers automated protection immediately.
+
+## Switch Lifecycle
+
+- UNARMED: Switch is idle and no background monitoring is active.
+- ARMED: Background monitor tracks elapsed time since last check-in.
+- RESET: A valid check-in restarts the interval timer.
+- TRIGGERED: Timer expired; target file encryption executes.
+- DISARMED: Switch is halted safely by the user.
