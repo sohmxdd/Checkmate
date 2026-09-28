@@ -69,3 +69,16 @@ target = Path("secret.txt")
 key = Path("secret.txt.key").read_bytes()
 DeadManSwitch.decrypt_file(target, key)
 ```
+
+## Documentation & Roadmap
+
+- Architecture: docs/architecture.md
+- Threat Model: docs/threat_model.md
+- Roadmap: ROADMAP.md
+- Changelog: CHANGELOG.md
+- Security Policy: SECURITY.md
+- Contributing: CONTRIBUTING.md
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
