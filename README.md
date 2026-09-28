@@ -35,3 +35,21 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+## Quick Start
+
+Import and instantiate DeadManSwitch:
+```python
+from pathlib import Path
+from deadman_switch import DeadManSwitch
+
+# Initialize with target file and 30-second interval
+switch = DeadManSwitch(target_file=Path("secret.txt"), interval=30)
+switch.arm()
+
+# Periodically call check_in to reset timer
+switch.check_in()
+
+# Safely disarm when finished
+switch.disarm()
+```
