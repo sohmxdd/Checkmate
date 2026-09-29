@@ -45,7 +45,63 @@ pip install -r requirements.txt
 
 ## Quick Start
 
-Import and instantiate DeadManSwitch:
+### 1. Interactive CLI Mode
+
+Launch the interactive console check-in loop directly:
+
+```bash
+# Run with default 30-second interval (prompts for target file)
+python deadman_switch.py
+
+# Or specify target file and interval
+python deadman_switch.py secret.txt -i 60
+```
+
+Once armed, the interactive prompt lets you reset the countdown or inspect switch status:
+
+```text
+[58s left] checkmate> c
+[+] Check-in recorded at 14:22:05. Switch timer reset to 60s.
+
+[59s left] checkmate> s
+[i] Status: ARMED | Time remaining: 57.4s | Interval: 60s
+
+[55s left] checkmate> d
+[*] Switch disarmed safely.
+```
+
+#### CLI Interactive Commands
+
+| Command | Alias | Description |
+| ------- | ----- | ----------- |
+| `[Enter]` | `c`, `checkin` | Reset switch timer back to full interval |
+| `s` | `status` | Query active status and exact remaining seconds |
+| `d` | `q`, `disarm`, `quit` | Safely disarm the switch and terminate the session |
+| `h` | `help` | Print list of available interactive commands |
+
+#### CLI Flags & Options
+
+```text
+usage: deadman_switch.py [-h] [-i INTERVAL] [--decrypt ENCRYPTED_FILE]
+                         [--key KEY_FILE_OR_STRING] [target]
+
+positional arguments:
+  target                Path to target file to protect
+
+options:
+  -h, --help            Show this help message and exit
+  -i, --interval INTERVAL
+                        Check-in timeout interval in seconds (default: 30)
+  --decrypt ENCRYPTED_FILE
+                        Decrypt a previously triggered target file
+  --key KEY_FILE_OR_STRING
+                        Key file path or raw Fernet key string for decryption
+```
+
+### 2. Programmatic Python API
+
+Import and instantiate `DeadManSwitch`:
+
 ```python
 from pathlib import Path
 from deadman_switch import DeadManSwitch
