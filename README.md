@@ -100,7 +100,7 @@ options:
 
 ### 2. Programmatic Python API
 
-Import and instantiate `DeadManSwitch`:
+#### Manual Arming & Disarming
 
 ```python
 from pathlib import Path
@@ -109,14 +109,42 @@ from deadman_switch import DeadManSwitch
 switch = DeadManSwitch(target_file=Path("secret.txt"), interval=30)
 switch.arm()
 switch.check_in()
+print(f"Remaining: {switch.time_remaining:.1f}s")
 switch.disarm()
+```
+
+#### Context Manager Pattern (`with` statement)
+
+`DeadManSwitch` supports the context management protocol. Entering the context automatically arms the switch, and exiting automatically and safely disarms it—even if unexpected exceptions arise:
+
+```python
+from pathlib import Path
+from deadman_switch import DeadManSwitch
+
+with DeadManSwitch(target_file=Path("secret.txt"), interval=45) as switch:
+    # Perform sensitive operational tasks
+    switch.check_in()
+# Automatically disarmed upon exiting the block
 ```
 
 ## Recovery & Decryption
 
 During prototype testing, the encryption key is preserved alongside the target file as `<filename>.key`.
 
-To restore an encrypted file:
+### Via CLI
+
+```bash
+# Automatically finds secret.txt.key adjacent to target file:
+python deadman_switch.py --decrypt secret.txt
+
+# Or provide explicit key file or key string:
+python deadman_switch.py --decrypt secret.txt --key secret.txt.key
+```
+
+### Via Python API
+
+To restore an encrypted file programmatically:
+
 ```python
 from pathlib import Path
 from deadman_switch import DeadManSwitch
