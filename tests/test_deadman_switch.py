@@ -102,3 +102,52 @@ def test_decryption_with_invalid_key_fails(tmp_path: Path):
     with pytest.raises(InvalidToken):
         DeadManSwitch.decrypt_file(target, wrong_key)
 
+
+def test_context_manager_arms_and_disarms(tmp_path: Path):
+    target = tmp_path / "cm_test.txt"
+    target.write_text("context manager payload")
+
+    with DeadManSwitch(target_file=target, interval=30) as switch:
+        assert switch.is_armed
+        assert switch.time_remaining > 0
+
+    assert not switch.is_armed
+
+
+def test_context_manager_disarms_on_exception(tmp_path: Path):
+    target = tmp_path / "cm_error_test.txt"
+    target.write_text("context manager payload")
+
+    switch_ref = None
+    with pytest.raises(RuntimeError, match="Intentional failure"):
+        with DeadManSwitch(target_file=target, interval=30) as switch:
+            switch_ref = switch
+            assert switch.is_armed
+            raise RuntimeError("Intentional failure")
+
+    assert switch_ref is not None
+    assert not switch_ref.is_armed
+
+
+def test_cli_decrypt_workflow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    import sys
+    from deadman_switch import run_cli
+
+    target = tmp_path / "cli_encrypted.txt"
+    target.write_text("CONFIDENTIAL PAYLOAD", encoding="utf-8")
+
+    switch = DeadManSwitch(target_file=target, interval=30)
+    key_file = switch.encrypt_file()
+    assert target.read_bytes() != b"CONFIDENTIAL PAYLOAD"
+
+    # Test running CLI decrypt command
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["deadman_switch.py", "--decrypt", str(target), "--key", str(key_file)],
+    )
+    run_cli()
+
+    assert target.read_text(encoding="utf-8") == "CONFIDENTIAL PAYLOAD"
+
+
