@@ -83,3 +83,148 @@ class DeadManSwitch:
                 self.is_armed = False
                 print("[!] Emergency shutdown initiated by dead man switch.")
                 os._exit(0)
+
+
+def run_cli() -> None:
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(
+        description="CHECKMATE - Local-First Dead Man's Switch CLI"
+    )
+    parser.add_argument(
+        "target",
+        nargs="?",
+        default=None,
+        help="Path to the target file to protect",
+    )
+    parser.add_argument(
+        "-i",
+        "--interval",
+        type=int,
+        default=30,
+        help="Check-in timeout interval in seconds (default: 30)",
+    )
+    parser.add_argument(
+        "--decrypt",
+        metavar="ENCRYPTED_FILE",
+        help="Decrypt a previously triggered target file",
+    )
+    parser.add_argument(
+        "--key",
+        metavar="KEY_FILE_OR_STRING",
+        help="Key file path or raw Fernet key string for decryption",
+    )
+
+    args = parser.parse_args()
+
+    # Handle decryption workflow
+    if args.decrypt:
+        target_path = Path(args.decrypt)
+        if not target_path.exists():
+            print(f"[!] Error: File '{target_path}' not found.", file=sys.stderr)
+            sys.exit(1)
+
+        key_bytes: bytes
+        if args.key:
+            potential_key_file = Path(args.key)
+            if potential_key_file.exists():
+                key_bytes = potential_key_file.read_bytes().strip()
+            else:
+                key_bytes = args.key.encode("utf-8").strip()
+        else:
+            default_key_path = target_path.with_suffix(target_path.suffix + ".key")
+            if default_key_path.exists():
+                print(f"[i] Using auto-detected key file: '{default_key_path.name}'")
+                key_bytes = default_key_path.read_bytes().strip()
+            else:
+                print(
+                    f"[!] Error: Recovery key not provided and '{default_key_path.name}' not found.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+        try:
+            DeadManSwitch.decrypt_file(target_path, key_bytes)
+        except Exception as e:
+            print(f"[!] Decryption failed: {e}", file=sys.stderr)
+            sys.exit(1)
+        return
+
+    # Handle dead man switch monitoring workflow
+    target_input = args.target
+    if not target_input:
+        try:
+            target_input = input("Enter target file path to protect [secret.txt]: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAborted.")
+            sys.exit(0)
+        if not target_input:
+            target_input = "secret.txt"
+
+    target_path = Path(target_input)
+    if not target_path.exists():
+        try:
+            create_choice = input(
+                f"File '{target_path}' does not exist. Create sample file for testing? [Y/n]: "
+            ).strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAborted.")
+            sys.exit(0)
+
+        if create_choice in ("", "y", "yes"):
+            target_path.write_text("CONFIDENTIAL: Checkmate Dead Man Switch test payload.\n", encoding="utf-8")
+            print(f"[+] Created sample file: '{target_path.resolve()}'")
+        else:
+            print(f"[!] Error: Target file '{target_path}' does not exist.", file=sys.stderr)
+            sys.exit(1)
+
+    switch = DeadManSwitch(target_file=target_path, interval=args.interval)
+
+    print("\n" + "=" * 60)
+    print("                 CHECKMATE DEAD MAN SWITCH")
+    print("=" * 60)
+    print(f" Target file : {target_path.resolve()}")
+    print(f" Interval    : {args.interval} seconds")
+    print("-" * 60)
+    print(" Commands:")
+    print("   [Enter] or 'c' : Check in (reset timer)")
+    print("   's'            : Show status & remaining time")
+    print("   'd' or 'q'     : Disarm and safely exit")
+    print("   'h'            : Show commands help")
+    print("=" * 60 + "\n")
+
+    switch.arm()
+
+    try:
+        while switch.is_armed:
+            prompt = f"[{int(switch.time_remaining)}s left] checkmate> "
+            cmd = input(prompt).strip().lower()
+            if cmd in ("", "c", "checkin", "check-in"):
+                switch.check_in()
+            elif cmd in ("s", "status"):
+                remaining = switch.time_remaining
+                print(
+                    f"[i] Status: {'ARMED' if switch.is_armed else 'DISARMED'} | "
+                    f"Time remaining: {remaining:.1f}s | "
+                    f"Interval: {switch.interval}s"
+                )
+            elif cmd in ("d", "disarm", "q", "quit", "exit"):
+                switch.disarm()
+                break
+            elif cmd in ("h", "help"):
+                print("Available commands:")
+                print("  [Enter], c, checkin : Reset switch timer")
+                print("  s, status           : Display remaining time")
+                print("  d, disarm, q, quit  : Safely disarm and exit")
+                print("  h, help             : Show this message")
+            else:
+                print(f"[?] Unknown command: '{cmd}'. Press Enter to check in, or 'h' for help.")
+    except (KeyboardInterrupt, EOFError):
+        print("\n[*] Interrupted by user.")
+        if switch.is_armed:
+            switch.disarm()
+
+
+if __name__ == "__main__":
+    run_cli()
