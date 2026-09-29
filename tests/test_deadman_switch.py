@@ -54,3 +54,51 @@ def test_check_in_resets_timer(tmp_path: Path):
         assert switch.time_remaining <= 20.0
     finally:
         switch.disarm()
+
+
+def test_encryption_and_key_retention(tmp_path: Path):
+    target = tmp_path / "data.txt"
+    original_content = "TOP SECRET BLUEPRINT 42"
+    target.write_text(original_content, encoding="utf-8")
+
+    switch = DeadManSwitch(target_file=target, interval=30)
+    key_file = switch.encrypt_file()
+
+    assert key_file.exists()
+    assert key_file == target.with_suffix(".txt.key")
+    assert key_file.read_bytes() == switch.key
+
+    encrypted_content = target.read_bytes()
+    assert encrypted_content != original_content.encode("utf-8")
+
+    # Verify decryption with bytes key
+    DeadManSwitch.decrypt_file(target, key_file.read_bytes())
+    assert target.read_text(encoding="utf-8") == original_content
+
+
+def test_decryption_with_string_key(tmp_path: Path):
+    target = tmp_path / "notes.txt"
+    original_content = "CONFIDENTIAL NOTES"
+    target.write_text(original_content, encoding="utf-8")
+
+    switch = DeadManSwitch(target_file=target, interval=30)
+    key_file = switch.encrypt_file()
+
+    key_str = key_file.read_bytes().decode("utf-8")
+    DeadManSwitch.decrypt_file(target, key_str)
+    assert target.read_text(encoding="utf-8") == original_content
+
+
+def test_decryption_with_invalid_key_fails(tmp_path: Path):
+    from cryptography.fernet import InvalidToken, Fernet
+
+    target = tmp_path / "secure.txt"
+    target.write_text("SENSITIVE", encoding="utf-8")
+
+    switch = DeadManSwitch(target_file=target, interval=30)
+    switch.encrypt_file()
+
+    wrong_key = Fernet.generate_key()
+    with pytest.raises(InvalidToken):
+        DeadManSwitch.decrypt_file(target, wrong_key)
+
