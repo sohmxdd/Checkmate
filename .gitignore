@@ -22,3 +22,9 @@ test_data/
 # IDEs
 .vscode/
 .idea/
+
+# Testing
+.pytest_cache/
+.pytest_tmp/
+.coverage
+htmlcov/
