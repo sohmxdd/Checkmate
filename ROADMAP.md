@@ -1,12 +1,16 @@
 # CHECKMATE Development Roadmap
 
-## Phase 1: Prototype (Current)
-- Single-script in-process monitoring.
-- Symmetric AES-128 (Fernet) file encryption.
-- Interactive console check-in loop.
-- Emergency key retention.
+## Phase 1: Prototype (Completed)
+- [x] Single-script in-process monitoring.
+- [x] Symmetric AES-128 (Fernet) file encryption.
+- [x] Interactive console check-in loop (`run_cli`).
+- [x] Emergency key retention (`<filename>.key`).
+- [x] Context manager protocol (`__enter__` / `__exit__`) support.
+- [x] Dynamic `time_remaining` property inspection.
+- [x] CLI `--decrypt` recovery workflow with automatic key discovery.
+- [x] Automated pytest test suite covering switch lifecycle, cryptography, and context management.
 
-## Phase 2: System Integration
+## Phase 2: System Integration (Next)
 - Background daemon / service support for Windows and Linux.
 - System tray status indicator and notification prompts.
 - Configurable notification threshold before switch triggers.
